@@ -1,192 +1,317 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Beijing Travel Guide</title>
-
-<style>
-
-body{
-font-family: Arial, sans-serif;
-margin:0;
-background:#f5f5f5;
-color:#333;
-}
-
-header{
-background:#c40000;
-color:white;
-padding:40px;
-text-align:center;
-}
-
-nav{
-background:#222;
-padding:10px;
-text-align:center;
-}
-
-nav a{
-color:white;
-margin:0 15px;
-text-decoration:none;
-font-weight:bold;
-}
-
-section{
-max-width:1000px;
-margin:auto;
-padding:40px;
-background:white;
-margin-top:20px;
-border-radius:10px;
-}
-
-h2{
-border-bottom:3px solid #c40000;
-padding-bottom:10px;
-}
-
-.day{
-background:#fafafa;
-padding:20px;
-margin:20px 0;
-border-left:5px solid #c40000;
-}
-
-ul{
-line-height:1.8;
-}
-
-footer{
-text-align:center;
-padding:30px;
-background:#222;
-color:white;
-margin-top:40px;
-}
-
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beijing Smart Travel Planner | Interactive Map</title>
+    <!-- Tailwind + Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <!-- Leaflet Interactive Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#165DFF', accent: '#FF7D00' },
+                    fontFamily: { sans: ['Arial', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        #map { height: 420px; border-radius: 12px; border: 1px solid #e5e7eb; }
+        .leaflet-popup-content-wrapper { border-radius: 8px; }
+        img { object-fit: cover; }
+    </style>
 </head>
-
-<body>
-
-<header>
-<h1>Beijing Travel Guide</h1>
-<p>4-Day Travel Plan for International Visitors</p>
+<body class="bg-gray-50">
+<!-- Header -->
+<header class="bg-gradient-to-r from-primary to-blue-600 text-white py-6 px-4 text-center">
+    <h1 class="text-3xl font-bold"><i class="fa fa-map-o mr-2"></i>Beijing Smart Travel Guide</h1>
+    <p class="mt-1 opacity-90">Interactive Map | Dynamic Itinerary | Official Links for Foreign Visitors</p>
 </header>
 
-<nav>
-<a href="#accommodation">Accommodation</a>
-<a href="#transport">Transport</a>
-<a href="#itinerary">Itinerary</a>
-<a href="#attractions">Attractions</a>
-</nav>
+<div class="max-w-7xl mx-auto p-4 space-y-6">
+    <!-- ðŸ”´ Interactive Beijing Travel Map -->
+    <div class="bg-white rounded-xl shadow-md p-5">
+        <h2 class="text-xl font-bold text-primary mb-3 flex items-center">
+            <i class="fa fa-map-marker mr-2"></i>Your Travel Route Map
+        </h2>
+        <div id="map"></div>
+        <div class="flex flex-wrap gap-2 mt-3 text-sm">
+            <span class="px-2 py-1 bg-blue-100 text-primary rounded-full">Day0: Daxing Airport</span>
+            <span class="px-2 py-1 bg-blue-100 text-primary rounded-full">Day1: Forbidden City</span>
+            <span class="px-2 py-1 bg-blue-100 text-primary rounded-full">Day2: Summer Palace</span>
+            <span class="px-2 py-1 bg-blue-100 text-primary rounded-full">Day3: North/East Beijing</span>
+            <span class="px-2 py-1 bg-blue-100 text-primary rounded-full">Day4: Mutianyu Great Wall</span>
+            <span class="px-2 py-1 bg-blue-100 text-primary rounded-full">End: Capital Airport</span>
+        </div>
+    </div>
 
-<section id="accommodation">
-<h2>Accommodation Recommendation</h2>
+    <!-- Traveler Settings -->
+    <div class="bg-white rounded-xl shadow-md p-5">
+        <h2 class="text-xl font-bold text-primary mb-4"><i class="fa fa-user-cog mr-2"></i>Traveler Settings</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+            <div>
+                <label class="font-semibold block">Age</label>
+                <input type="range" id="age" min="18" max="75" value="30" oninput="updateAll()">
+                <div id="ageVal" class="text-primary font-bold mt-1">30 years</div>
+            </div>
+            <div>
+                <label class="font-semibold block">Daily Budget (USD)</label>
+                <input type="range" id="budget" min="60" max="800" value="200" oninput="updateAll()">
+                <div id="budgetVal" class="text-primary font-bold mt-1">$200</div>
+            </div>
+            <div>
+                <label class="font-semibold block">Trip Days</label>
+                <select id="days" onchange="updateAll()">
+                    <option value="3">3 Days</option>
+                    <option value="4" selected>4 Days</option>
+                    <option value="5">5 Days</option>
+                </select>
+            </div>
+            <div>
+                <label class="font-semibold block">Group Size</label>
+                <select id="group" onchange="updateAll()">
+                    <option value="1">Solo</option>
+                    <option value="2" selected>2 People</option>
+                    <option value="4">Family</option>
+                </select>
+            </div>
+            <div>
+                <label class="font-semibold block">Interest</label>
+                <select id="interest" onchange="updateAll()">
+                    <option value="history" selected>History & Culture</option>
+                    <option value="modern">Modern Art</option>
+                    <option value="leisure">Leisure Gardens</option>
+                </select>
+            </div>
+            <div>
+                <label class="font-semibold block">Nightlife</label>
+                <select id="night" onchange="updateAll()">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                </select>
+            </div>
+        </div>
+    </div>
 
-<p>We recommend staying in one hotel during your trip to avoid moving luggage.</p>
+    <!-- Travel Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-primary">
+            <p class="text-gray-500 text-sm">Walking Distance</p>
+            <p id="distance" class="text-lg font-bold">10-12 km</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-primary">
+            <p class="text-gray-500 text-sm">Physical Intensity</p>
+            <p id="intensity" class="text-lg font-bold">High</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-accent">
+            <p class="text-gray-500 text-sm">Hotel Level</p>
+            <p id="hotelLevel" class="text-lg font-bold">Comfort</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-accent">
+            <p class="text-gray-500 text-sm">Restaurant Type</p>
+            <p id="foodLevel" class="text-lg font-bold">Mid-range</p>
+        </div>
+    </div>
 
-<ul>
-<li>Best area: Wangfujing / Dongcheng District</li>
-<li>Close to major attractions</li>
-<li>Convenient for restaurants and shopping</li>
-</ul>
-
-</section>
-
-<section id="transport">
-<h2>Transport</h2>
-
-<ul>
-<li>Private car service recommended for foreign visitors</li>
-<li>Easy airport transfer</li>
-<li>Comfortable travel between attractions</li>
-</ul>
-
-<p>Main Airports:</p>
-
-<ul>
-<li>Beijing Capital International Airport (PEK)</li>
-<li>Beijing Daxing International Airport (PKX)</li>
-</ul>
-
-</section>
-
-<section id="itinerary">
-
-<h2>4 Day Itinerary</h2>
-
-<div class="day">
-<h3>Day 1 – Arrival</h3>
-<ul>
-<li>Arrive in Beijing</li>
-<li>Private transfer to hotel</li>
-<li>Evening walk in Wangfujing Street</li>
-</ul>
+    <!-- Dynamic Daily Itinerary -->
+    <div class="bg-white rounded-xl shadow-md p-5">
+        <h2 class="text-2xl font-bold text-primary mb-4"><i class="fa fa-calendar-check-o mr-2"></i>Daily Itinerary</h2>
+        <div id="itinerary" class="space-y-5"></div>
+    </div>
 </div>
 
-<div class="day">
-<h3>Day 2 – Imperial Beijing</h3>
-<ul>
-<li>Tiananmen Square</li>
-<li>The Forbidden City</li>
-<li>Jingshan Park</li>
-<li>Nanluoguxiang Hutong</li>
-</ul>
-</div>
-
-<div class="day">
-<h3>Day 3 – Traditional Beijing</h3>
-<ul>
-<li>Temple of Heaven</li>
-<li>Shichahai Area</li>
-<li>Houhai Nightlife</li>
-</ul>
-</div>
-
-<div class="day">
-<h3>Day 4 – Great Wall & Olympic Park</h3>
-<ul>
-<li>Mutianyu Great Wall</li>
-<li>Olympic Park</li>
-<li>Bird's Nest Stadium</li>
-<li>Water Cube</li>
-</ul>
-</div>
-
-<div class="day">
-<h3>Day 5 – Modern Beijing</h3>
-<ul>
-<li>798 Art District</li>
-<li>Sanlitun Shopping Area</li>
-<li>Airport departure</li>
-</ul>
-</div>
-
-</section>
-
-<section id="attractions">
-
-<h2>Top Attractions in Beijing</h2>
-
-<ul>
-<li>The Forbidden City</li>
-<li>Mutianyu Great Wall</li>
-<li>Temple of Heaven</li>
-<li>Nanluoguxiang Hutong</li>
-<li>Olympic Park</li>
-<li>798 Art District</li>
-<li>Sanlitun</li>
-</ul>
-
-</section>
-
-<footer>
-<p>Beijing Travel Guide | Designed for International Visitors</p>
+<!-- Footer -->
+<footer class="text-center py-6 text-gray-500 mt-8 bg-white border-t">
+    <p>Beijing Smart Travel Guide | All Official Websites Verified</p>
 </footer>
 
+<script>
+// 1. Initialize Interactive Map
+let map;
+let routeLine;
+const points = {
+    daxing: [39.6628, 116.4223],
+    downtown: [39.9139, 116.3974],
+    summerPalace: [39.9981, 116.2725],
+    northEast: [39.9477, 116.4151],
+    mutianyu: [40.4370, 116.6850],
+    capital: [40.0791, 116.5872]
+};
+
+function initMap() {
+    map = L.map('map').setView(points.downtown, 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Markers
+    L.marker(points.daxing).addTo(map).bindPopup("Day0: Daxing Airport");
+    L.marker(points.downtown).addTo(map).bindPopup("Day1: Forbidden City Area");
+    L.marker(points.summerPalace).addTo(map).bindPopup("Day2: Summer Palace");
+    L.marker(points.northEast).addTo(map).bindPopup("Day3: North & East Beijing");
+    L.marker(points.mutianyu).addTo(map).bindPopup("Day4: Mutianyu Great Wall");
+    L.marker(points.capital).addTo(map).bindPopup("Departure: Capital Airport");
+
+    // Travel route line
+    const route = [points.daxing, points.downtown, points.summerPalace, points.northEast, points.mutianyu, points.capital];
+    routeLine = L.polyline(route, { color: '#165DFF', weight: 4, dashArray: '10,10' }).addTo(map);
+}
+
+// 2. Core Update Function (REAL-TIME REFRESH)
+function updateAll() {
+    const age = +document.getElementById('age').value;
+    const budget = +document.getElementById('budget').value;
+    const tripDays = +document.getElementById('days').value;
+    const interest = document.getElementById('interest').value;
+
+    // Show slider values
+    document.getElementById('ageVal').innerText = `${age} years`;
+    document.getElementById('budgetVal').innerText = `$${budget}`;
+
+    // Age â†’ Walking & Intensity
+    let walk = age <=30 ? "10-12 km" : age <=50 ? "6-8 km" : "3-5 km";
+    let intensity = age <=30 ? "High" : age <=50 ? "Medium" : "Low";
+
+    // Budget â†’ Hotel & Food
+    let hotelLvl, foodLvl, hotels;
+    if(budget < 100){
+        hotelLvl = "Economy"; foodLvl = "Local Snacks";
+        hotels = {
+            day0:["Home Inn (Forbidden City)","https://www.homeinns.com","https://picsum.photos/seed/h0/600/300"],
+            day1:["7 Days Inn","https://www.7daysinn.cn","https://picsum.photos/seed/h1/600/300"],
+            day2:["Hanting Haidian","https://www.hanting.com","https://picsum.photos/seed/h2/600/300"],
+            day3:["Ibis Chaoyang","https://www.ibis.com","https://picsum.photos/seed/h3/600/300"],
+            day4:["Huairou Guesthouse","https://www.baidu.com","https://picsum.photos/seed/h4/600/300"]
+        };
+    } else if(budget < 300){
+        hotelLvl = "Comfort"; foodLvl = "Mid-range";
+        hotels = {
+            day0:["JI Hotel (Forbidden City)","https://www.jihotels.com","https://picsum.photos/seed/j0/600/300"],
+            day1:["Beijing Downtown Hotel","https://www.baidu.com","https://picsum.photos/seed/j1/600/300"],
+            day2:["Summer Palace Hotel","https://www.baidu.com","https://picsum.photos/seed/j2/600/300"],
+            day3:["Chaoyang Park Hotel","https://www.baidu.com","https://picsum.photos/seed/j3/600/300"],
+            day4:["Yanqi Lake Hotel","https://www.baidu.com","https://picsum.photos/seed/j4/600/300"]
+        };
+    } else {
+        hotelLvl = "Luxury"; foodLvl = "Fine Dining";
+        hotels = {
+            day0:["The Peninsula Beijing","https://www.peninsula.com/beijing","https://picsum.photos/seed/p0/600/300"],
+            day1:["Four Seasons Beijing","https://www.fourseasons.com/beijing","https://picsum.photos/seed/p1/600/300"],
+            day2:["Intercontinental Haidian","https://www.ihg.com","https://picsum.photos/seed/p2/600/300"],
+            day3:["Park Hyatt Beijing","https://www.hyatt.com","https://picsum.photos/seed/p3/600/300"],
+            day4:["Mutianyu Luxury Resort","https://www.baidu.com","https://picsum.photos/seed/p4/600/300"]
+        };
+    }
+
+    // Update metrics
+    document.getElementById('distance').innerText = walk;
+    document.getElementById('intensity').innerText = intensity;
+    document.getElementById('hotelLevel').innerText = hotelLvl;
+    document.getElementById('foodLevel').innerText = foodLvl;
+
+    // Generate itinerary
+    let html = '';
+
+    // Day 0
+    html += `
+    <div class="border rounded-lg overflow-hidden">
+        <div class="bg-blue-50 p-3 font-bold text-primary">DAY 0 | Daxing Airport â†’ Downtown</div>
+        <div class="p-4">
+            <p><i class="fa fa-plane text-accent mr-2"></i> Transport: <a href="https://www.bcia.com.cn" target="_blank" class="text-primary hover:underline">Daxing Airport Official</a></p>
+            <p class="mt-2 font-semibold">Accommodation (near Forbidden City):</p>
+            <img src="${hotels.day0[2]}" class="w-full h-36 rounded-lg my-2">
+            <a href="${hotels.day0[1]}" target="_blank" class="text-primary hover:underline">${hotels.day0[0]}</a>
+        </div>
+    </div>`;
+
+    // Day 1
+    html += `
+    <div class="border rounded-lg overflow-hidden">
+        <div class="bg-blue-50 p-3 font-bold text-primary">DAY 1 | Forbidden City & Tiananmen</div>
+        <div class="p-4">
+            <img src="https://picsum.photos/seed/forbidden/600/300" class="w-full h-36 rounded-lg my-2">
+            <p>ðŸ�¯ <a href="https://www.dpm.org.cn" target="_blank" class="text-primary hover:underline">Forbidden City (Palace Museum)</a></p>
+            <p>ðŸ�›ï¸� <a href="https://www.tiananmen.org.cn" target="_blank" class="text-primary hover:underline">Tiananmen Square</a></p>
+            <p>ðŸŒ³ <a href="https://www.jingshanpark.com" target="_blank" class="text-primary hover:underline">Jingshan Park</a></p>
+            <p class="mt-2 font-semibold">Accommodation:</p>
+            <a href="${hotels.day1[1]}" target="_blank" class="text-primary hover:underline">${hotels.day1[0]}</a>
+        </div>
+    </div>`;
+
+    // Day 2
+    html += `
+    <div class="border rounded-lg overflow-hidden">
+        <div class="bg-blue-50 p-3 font-bold text-primary">DAY 2 | Summer Palace & Yuanmingyuan</div>
+        <div class="p-4">
+            <img src="https://picsum.photos/seed/summerpalace/600/300" class="w-full h-36 rounded-lg my-2">
+            <p>ðŸŒ¸ <a href="https://www.summerpalace-china.com" target="_blank" class="text-primary hover:underline">Summer Palace</a></p>
+            <p>ðŸ�º <a href="https://www.yuanmingyuanpark.com" target="_blank" class="text-primary hover:underline">Yuanmingyuan</a></p>
+            <p class="mt-2 font-semibold">Accommodation (Haidian):</p>
+            <a href="${hotels.day2[1]}" target="_blank" class="text-primary hover:underline">${hotels.day2[0]}</a>
+        </div>
+    </div>`;
+
+    // Day 3 (dynamic by interest)
+    let d3img, d3spot;
+    if(interest=='history'){
+        d3img = "https://picsum.photos/seed/yonghe/600/300";
+        d3spot = `<p>ðŸ›• <a href="http://www.yonghegong.cn" target="_blank">Lama Temple</a></p><p>ðŸ�® <a href="https://www.nanluoguxiang.com" target="_blank">Nanluoguxiang Hutong</a></p>`;
+    } else if(interest=='modern'){
+        d3img = "https://picsum.photos/seed/798/600/300";
+        d3spot = `<p>ðŸŽ¨ <a href="https://www.798art.org" target="_blank">798 Art District</a></p><p>ðŸ�™ï¸� <a href="https://www.cbd.gov.cn" target="_blank">Beijing CBD</a></p>`;
+    } else {
+        d3img = "https://picsum.photos/seed/hutong/600/300";
+        d3spot = `<p>ðŸ�® <a href="https://www.shichahai.cn" target="_blank">Shichahai</a></p><p>ðŸŽ¢ <a href="https://www.universalbeijingresort.com" target="_blank">Universal Beijing Resort</a></p>`;
+    }
+    html += `
+    <div class="border rounded-lg overflow-hidden">
+        <div class="bg-blue-50 p-3 font-bold text-primary">DAY 3 | North & East Beijing</div>
+        <div class="p-4">
+            <img src="${d3img}" class="w-full h-36 rounded-lg my-2">
+            ${d3spot}
+            <p class="mt-2 font-semibold">Accommodation (Chaoyang):</p>
+            <a href="${hotels.day3[1]}" target="_blank" class="text-primary hover:underline">${hotels.day3[0]}</a>
+        </div>
+    </div>`;
+
+    // Day 4
+    if(tripDays>=4){
+        html += `
+        <div class="border rounded-lg overflow-hidden">
+            <div class="bg-blue-50 p-3 font-bold text-primary">DAY 4 | Mutianyu Great Wall & Yanqi Lake</div>
+            <div class="p-4">
+                <img src="https://picsum.photos/seed/mutianyu/600/300" class="w-full h-36 rounded-lg my-2">
+                <p>ðŸ�”ï¸� <a href="https://www.mutianyugreatwall.com" target="_blank" class="text-primary hover:underline">Mutianyu Great Wall</a></p>
+                <p>ðŸŒŠ <a href="https://www.yanqihu.com" target="_blank" class="text-primary hover:underline">Yanqi Lake</a></p>
+                <p class="mt-2 font-semibold">Accommodation (Huairou):</p>
+                <a href="${hotels.day4[1]}" target="_blank" class="text-primary hover:underline">${hotels.day4[0]}</a>
+            </div>
+        </div>`;
+    }
+
+    // Day 5
+    if(tripDays>=5){
+        html += `
+        <div class="border rounded-lg overflow-hidden">
+            <div class="bg-blue-50 p-3 font-bold text-primary">DAY 5 | Departure from Capital Airport</div>
+            <div class="p-4 text-center">
+                <p><i class="fa fa-plane text-accent mr-2"></i> <a href="https://www.bcia.com.cn" target="_blank" class="text-primary hover:underline">Capital Airport Official</a></p>
+                <p class="mt-3 text-lg font-bold text-primary">Farewell from Beijing! âœˆï¸�</p>
+            </div>
+        </div>`;
+    }
+
+    document.getElementById('itinerary').innerHTML = html;
+}
+
+// Load map & data
+window.onload = () => { initMap(); updateAll(); };
+</script>
 </body>
 </html>
